@@ -1,4 +1,3 @@
-
 import { pgTable, uuid, varchar, text, decimal, integer, boolean, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -9,8 +8,9 @@ export const paymentStatusEnum = pgEnum('payment_status', ['unpaid', 'paid', 're
 export const productStatusEnum = pgEnum('product_status', ['active', 'draft', 'archived']);
 export const couponTypeEnum = pgEnum('coupon_type', ['percentage', 'fixed']);
 export const layoutTypeEnum = pgEnum('layout_type', ['grid', 'list', 'mixed']);
+export const loyaltyTierEnum = pgEnum('loyalty_tier', ['bronze', 'silver', 'gold', 'platinum']);
 
-// Users Table
+// Users Table - Enhanced with loyalty program
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).unique().notNull(),
@@ -20,6 +20,11 @@ export const users = pgTable('users', {
   phone: varchar('phone', { length: 20 }),
   role: userRoleEnum('role').default('customer').notNull(),
   isVerified: boolean('is_verified').default(false).notNull(),
+  loyaltyPoints: integer('loyalty_points').default(0),
+  loyaltyTier: loyaltyTierEnum('loyalty_tier').default('bronze'),
+  totalSpent: decimal('total_spent', { precision: 10, scale: 2 }).default('0'),
+  lastLoginAt: timestamp('last_login_at'),
+  preferences: jsonb('preferences').$type<any>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -88,7 +93,7 @@ export const products = pgTable('products', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// Orders Table
+// Orders Table - Enhanced with loyalty points
 export const orders = pgTable('orders', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id'),
@@ -99,6 +104,8 @@ export const orders = pgTable('orders', {
   taxAmount: decimal('tax_amount', { precision: 10, scale: 2 }).default('0'),
   shippingAmount: decimal('shipping_amount', { precision: 10, scale: 2 }).default('0'),
   discountAmount: decimal('discount_amount', { precision: 10, scale: 2 }).default('0'),
+  loyaltyPointsUsed: integer('loyalty_points_used').default(0),
+  loyaltyPointsEarned: integer('loyalty_points_earned').default(0),
   totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
   currency: varchar('currency', { length: 3 }).default('USD'),
   paymentStatus: paymentStatusEnum('payment_status').default('unpaid'),
@@ -106,6 +113,9 @@ export const orders = pgTable('orders', {
   shippingAddress: jsonb('shipping_address').$type<any>(),
   billingAddress: jsonb('billing_address').$type<any>(),
   trackingToken: varchar('tracking_token', { length: 100 }),
+  trackingNumber: varchar('tracking_number', { length: 100 }),
+  shippedAt: timestamp('shipped_at'),
+  deliveredAt: timestamp('delivered_at'),
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -145,10 +155,58 @@ export const coupons = pgTable('coupons', {
   minimumAmount: decimal('minimum_amount', { precision: 10, scale: 2 }).default('0'),
   usageLimit: integer('usage_limit'),
   usedCount: integer('used_count').default(0),
+  isFirstTimeOnly: boolean('is_first_time_only').default(false),
+  applicableCategories: jsonb('applicable_categories').$type<string[]>(),
   startsAt: timestamp('starts_at'),
   expiresAt: timestamp('expires_at'),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Recently Viewed Products
+export const recentlyViewed = pgTable('recently_viewed', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  productId: uuid('product_id').notNull(),
+  viewedAt: timestamp('viewed_at').defaultNow().notNull(),
+});
+
+// Product Views Analytics
+export const productViews = pgTable('product_views', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  productId: uuid('product_id').notNull(),
+  sessionId: varchar('session_id', { length: 255 }),
+  userId: uuid('user_id'),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  referrer: text('referrer'),
+  viewedAt: timestamp('viewed_at').defaultNow().notNull(),
+});
+
+// Inventory Tracking
+export const inventoryLogs = pgTable('inventory_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  productId: uuid('product_id').notNull(),
+  changeType: varchar('change_type', { length: 20 }).notNull(), // 'sale', 'restock', 'adjustment'
+  quantityBefore: integer('quantity_before').notNull(),
+  quantityAfter: integer('quantity_after').notNull(),
+  quantityChanged: integer('quantity_changed').notNull(),
+  reason: text('reason'),
+  orderId: uuid('order_id'),
+  userId: uuid('user_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Newsletter Subscriptions
+export const newsletterSubscriptions = pgTable('newsletter_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: varchar('email', { length: 255 }).unique().notNull(),
+  firstName: varchar('first_name', { length: 100 }),
+  lastName: varchar('last_name', { length: 100 }),
+  isActive: boolean('is_active').default(true),
+  preferences: jsonb('preferences').$type<any>(),
+  subscribedAt: timestamp('subscribed_at').defaultNow().notNull(),
+  unsubscribedAt: timestamp('unsubscribed_at'),
 });
 
 // Wishlist Table
@@ -183,6 +241,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   reviews: many(reviews),
   wishlist: many(wishlist),
   addresses: many(userAddresses),
+  recentlyViewed: many(recentlyViewed),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -251,6 +310,43 @@ export const wishlistRelations = relations(wishlist, ({ one }) => ({
 export const userAddressesRelations = relations(userAddresses, ({ one }) => ({
   user: one(users, {
     fields: [userAddresses.userId],
+    references: [users.id],
+  }),
+}));
+
+export const recentlyViewedRelations = relations(recentlyViewed, ({ one }) => ({
+  user: one(users, {
+    fields: [recentlyViewed.userId],
+    references: [users.id],
+  }),
+  product: one(products, {
+    fields: [recentlyViewed.productId],
+    references: [products.id],
+  }),
+}));
+
+export const productViewsRelations = relations(productViews, ({ one }) => ({
+  product: one(products, {
+    fields: [productViews.productId],
+    references: [products.id],
+  }),
+  user: one(users, {
+    fields: [productViews.userId],
+    references: [users.id],
+  }),
+}));
+
+export const inventoryLogsRelations = relations(inventoryLogs, ({ one }) => ({
+  product: one(products, {
+    fields: [inventoryLogs.productId],
+    references: [products.id],
+  }),
+  order: one(orders, {
+    fields: [inventoryLogs.orderId],
+    references: [orders.id],
+  }),
+  user: one(users, {
+    fields: [inventoryLogs.userId],
     references: [users.id],
   }),
 }));
