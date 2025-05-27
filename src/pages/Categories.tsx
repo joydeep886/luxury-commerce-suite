@@ -8,7 +8,7 @@ const Categories = () => {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const response = await fetch('/api/categories');
+      const response = await fetch('http://localhost:3001/api/categories');
       if (!response.ok) throw new Error('Failed to fetch categories');
       return response.json();
     }

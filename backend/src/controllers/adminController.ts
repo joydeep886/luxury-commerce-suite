@@ -188,7 +188,12 @@ export const getAllProducts = async (req: Request, res: Response) => {
     }
 
     const orderDirection = sortOrder === 'desc' ? desc : asc;
-    const orderColumn = products[sortBy as keyof typeof products] || products.createdAt;
+    // Only allow sorting by known columns to avoid passing invalid types to .orderBy()
+    const allowedSortColumns = [
+      'createdAt', 'name', 'price', 'stock', 'rating', 'reviewCount', 'isPopular', 'isNew', 'isSale', 'adminScore'
+    ] as const;
+    const safeSortBy = allowedSortColumns.includes(sortBy as any) ? sortBy : 'createdAt';
+    const orderColumn = products[safeSortBy as keyof typeof products] || products.createdAt;
 
     const productList = await db.select({
       id: products.id,
@@ -212,7 +217,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
       .leftJoin(categories, eq(products.categoryId, categories.id))
       .leftJoin(brands, eq(products.brandId, brands.id))
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .orderBy(orderDirection(orderColumn))
+      .orderBy(orderDirection(orderColumn as any))
       .limit(parseInt(limit as string))
       .offset(offset);
 
