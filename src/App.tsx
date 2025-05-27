@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -22,6 +23,7 @@ import Wishlist from '@/pages/Wishlist';
 import AboutUs from '@/pages/AboutUs';
 import ContactUs from '@/pages/ContactUs';
 import NotFound from '@/pages/NotFound';
+import AdminDashboard from '@/pages/AdminDashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,37 +81,47 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <Router>
           <div className="min-h-screen flex flex-col">
-            {/* Desktop Header */}
-            <div className="hidden md:block">
-              <Header />
-            </div>
-            
-            {/* Mobile Header */}
-            <div className="md:hidden">
-              <MobileHeader />
-            </div>
+            <Routes>
+              {/* Admin Routes */}
+              <Route path="/admin/*" element={<AdminDashboard />} />
+              
+              {/* Public Routes */}
+              <Route path="/*" element={
+                <>
+                  {/* Desktop Header */}
+                  <div className="hidden md:block">
+                    <Header />
+                  </div>
+                  
+                  {/* Mobile Header */}
+                  <div className="md:hidden">
+                    <MobileHeader />
+                  </div>
 
-            {/* Main Content */}
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/categories" element={<Categories />} />
-                <Route path="/category/:slug" element={<CategoryDetail />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/contact" element={<ContactUs />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
+                  {/* Main Content */}
+                  <main className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/products" element={<Products />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/categories" element={<Categories />} />
+                      <Route path="/category/:slug" element={<CategoryDetail />} />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/wishlist" element={<Wishlist />} />
+                      <Route path="/about" element={<AboutUs />} />
+                      <Route path="/contact" element={<ContactUs />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </main>
 
-            <Footer />
+                  <Footer />
+                </>
+              } />
+            </Routes>
           </div>
           <Toaster />
         </Router>
