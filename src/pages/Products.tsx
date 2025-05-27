@@ -21,7 +21,7 @@ const Products = () => {
         page: page.toString(),
         limit: '24'
       });
-      const response = await fetch(`/api/products/search?${params}`);
+      const response = await fetch(`http://localhost:3001/api/products/search?${params}`);
       if (!response.ok) throw new Error('Failed to fetch products');
       return response.json();
     }

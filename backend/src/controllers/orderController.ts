@@ -5,6 +5,8 @@ import { orders, orderItems, products } from '../models/schema';
 import { eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
+import { sql } from 'drizzle-orm';
+
 
 const createOrderSchema = z.object({
   items: z.array(z.object({

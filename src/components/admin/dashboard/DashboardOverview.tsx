@@ -40,7 +40,7 @@ const DashboardOverview = () => {
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['admin-dashboard'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/dashboard/stats');
+      const response = await fetch('http://localhost:3001/api/admin/dashboard/stats');
       if (!response.ok) throw new Error('Failed to fetch dashboard data');
       return response.json();
     }

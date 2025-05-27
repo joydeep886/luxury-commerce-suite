@@ -1,20 +1,38 @@
 
+// {
+//   "compilerOptions": {
+//     "target": "ES2024",
+//     "module": "commonjs",
+//     "lib": ["ES2024"],
+//     "outDir": "./dist",
+//     "rootDir": "./src",
+//     "strict": true,
+//     "esModuleInterop": true,
+//     "skipLibCheck": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "resolveJsonModule": true,
+//     "declaration": true,
+//     "declarationMap": true,
+//     "sourceMap": true
+//   },
+//   "include": ["src/**/*"],
+//   "exclude": ["node_modules", "dist"]
+// }
+
+
+
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "es2022",         // change this line from es2024 to es2022
     "module": "commonjs",
-    "lib": ["ES2020"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
+    "moduleResolution": "node",
     "esModuleInterop": true,
+    "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true
+    "outDir": "dist"
   },
-  "include": ["src/**/*"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
+
 }

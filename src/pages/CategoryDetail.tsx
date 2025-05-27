@@ -11,7 +11,7 @@ const CategoryDetail = () => {
   const { data: categoryData, isLoading } = useQuery({
     queryKey: ['category', slug],
     queryFn: async () => {
-      const response = await fetch(`/api/categories/${slug}`);
+      const response = await fetch(`http://localhost:3001/api/categories/${slug}`);
       if (!response.ok) throw new Error('Failed to fetch category');
       return response.json();
     }

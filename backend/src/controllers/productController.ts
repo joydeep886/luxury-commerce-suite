@@ -1,7 +1,7 @@
 
 import { Request, Response } from 'express';
 import { db } from '../config/database';
-import { products, categories, brands, reviews } from '../models/schema';
+import { products, categories, brands, reviews , users } from '../models/schema';
 import { eq, like, and, gte, lte, desc, asc, sql, or, ilike } from 'drizzle-orm';
 import { z } from 'zod';
 
